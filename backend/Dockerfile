@@ -1,5 +1,3 @@
-# backend/Dockerfile
-
 # Imagem base oficial do Python — versão slim (menor tamanho)
 FROM python:3.12-slim
 
