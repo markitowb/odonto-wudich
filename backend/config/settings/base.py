@@ -46,7 +46,9 @@ THIRD_PARTY_APPS = [
 ]
 
 # Nossos módulos — serão adicionados conforme criamos
-LOCAL_APPS: list[str] = []
+LOCAL_APPS: list[str] = [
+    "apps.accounts",
+]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
@@ -166,3 +168,11 @@ MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# ============================================
+# AUTENTICAÇÃO CUSTOMIZADA
+# ============================================
+
+# CRÍTICO: deve ser definido antes das migrations
+# Informa ao Django para usar nosso User customizado
+AUTH_USER_MODEL = "accounts.User"
