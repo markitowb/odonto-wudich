@@ -1,0 +1,59 @@
+# ============================================
+# .gitignore — Odonto Wudich
+# NUNCA remova as linhas de segurança
+# ============================================
+
+# SEGURANÇA — CRÍTICO
+# Esses arquivos NUNCA devem ir para o GitHub
+.env
+.env.*
+!.env.example
+secrets.json
+*.pem
+*.key
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Django
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+media/
+staticfiles/
+
+# Virtual Environment
+venv/
+.venv/
+env/
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+npm-debug.log*
+
+# Docker
+.docker/
+
+# IDEs
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Testes
+.coverage
+htmlcov/
+.pytest_cache/
