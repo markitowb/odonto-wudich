@@ -1,0 +1,55 @@
+# docker-compose.yml
+# Ambiente de desenvolvimento local
+
+services:
+
+  # Aplicação Django
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: clinica_backend
+    volumes:
+      - ./backend:/app        # sincroniza código local com contêiner
+    ports:
+      - "8000:8000"           # acesso via http://localhost:8000
+    env_file:
+      - .env                  # carrega variáveis do .env (nunca hardcode!)
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py runserver 0.0.0.0:8000"
+
+  # Banco de dados PostgreSQL
+  db:
+    image: postgres:16-alpine
+    container_name: clinica_db
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"           # acesso local para ferramentas como DBeaver
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis (cache e filas de notificação)
+  redis:
+    image: redis:7-alpine
+    container_name: clinica_redis
+    ports:
+      - "6379:6379"
+
+volumes:
+  postgres_data:              # persiste dados entre reinicializações
