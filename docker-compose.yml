@@ -1,0 +1,23 @@
+
+services:
+  db:
+    image: postgres:16-alpine # Usamos a versão 16 do PostgreSQL, com imagem alpine para ser mais leve
+    container_name: odonto_wudich_db
+    env_file:
+      - ./odonto-wudich-backend/.env # Carrega as variáveis de ambiente do arquivo .env
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data # Persiste os dados do banco para não perdê-los ao reiniciar o container
+    ports:
+      - "5432:5432" # Mapeia a porta 5432 do host para a porta 5432 do container
+    healthcheck: # Verifica se o banco de dados está pronto para aceitar conexões
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata: # Define o volume para persistência dos dados
