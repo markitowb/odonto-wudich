@@ -26,9 +26,9 @@ urlpatterns = [
     path("admin/", admin.site.urls),
 
     # API v1
-    path("api/users/", include("users.urls", namespace="users")),
-    path("api/patients/", include("patients.urls", namespace="patients")),
-    path("api/appointments/", include("appointments.urls", namespace="appointments")),
+    path("api/users/", include("users.urls")),
+    path("api/patients/", include("patients.urls")),
+    path("api/appointments/", include("appointments.urls")),
 
     # Documentação automática da API (Swagger/Redoc)
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),

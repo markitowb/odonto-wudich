@@ -5,6 +5,14 @@ from .views import PatientListCreateView, PatientRetrieveUpdateDestroyView
 app_name = "patients"
 
 urlpatterns = [
-    path("", PatientListCreateView.as_view(), name="patient_list_create"),
-    path("<int:pk>/", PatientRetrieveUpdateDestroyView.as_view(), name="patient_detail"),
+    path(
+        "", 
+        PatientListCreateView.as_view(), 
+        name="patient-list-create"
+    ),
+    path(
+        "<int:pk>/", 
+        PatientRetrieveUpdateDestroyView.as_view(), 
+        name="patient-detail"
+    ),
 ]
