@@ -1,121 +1,156 @@
-# Odonto‑Wudich
+# Odonto Wudich
 
-Sistema completo para gestão de **clínica odontológica**, com backend em **Python/Django** e frontend (em desenvolvimento) em **React**.
+Sistema completo para gestão de clínica odontológica, com backend em **Django REST Framework** e frontend em **React** (em desenvolvimento).
 
-> Projeto focado em demonstrar habilidades reais em desenvolvimento backend com **Django REST Framework**, boas práticas de **segurança** e **código limpo**, voltado para ajudar dentistas a gerenciar suas consultas, dados de paciente e demais dados de sua clínica.
+O objetivo deste projeto é demonstrar, de forma prática, habilidades em:
 
----
-
-## Estrutura do projeto
-
-```text
-odonto-wudich/
-├── odonto-wudich-backend/   # API REST em Django + DRF + JWT
-└── odonto-wudich-frontend/  # (em breve) frontend em React/Next.js
-```
-
-### Backend – Django REST API
-
-- **Stack:** Python 3.10, Django 4, Django REST Framework
-- **Autenticação:** JWT (djangorestframework-simplejwt)
-- **Documentação da API:** drf-spectacular (OpenAPI 3, Swagger UI, Redoc)
-- **Banco de dados (dev):** SQLite
-- **Banco de dados (produção – planejado):** PostgreSQL
-
-Funcionalidades principais:
-
-- **Usuários** (CustomUser) com `role`:
-  - `dentist`
-  - `secretary`
-- **Pacientes**:
-  - CRUD completo, com CPF único.
-  - Campos como nome, contato, data de nascimento, observações.
-- **Consultas**:
-  - Agendamentos ligando paciente + dentista + data/hora.
-  - Campos: `start_datetime`, `end_datetime`, `status` (`scheduled`, `completed`, `canceled`), `notes`.
-  - Filtros por paciente, dentista e data.
-- **Permissões**:
-  - Qualquer usuário autenticado pode listar pacientes e consultas.
-  - Apenas `dentist` ou `secretary` podem criar/editar/deletar pacientes e consultas.
-  - Apenas `dentist` pode marcar consulta como **concluída** (`status = completed`).
-
-Mais detalhes técnicos estão no README específico do backend:  
-👉 [`odonto-wudich-backend/README.md`](./odonto-wudich-backend/README.md)
-
-### Frontend – React / Next.js (planejado)
-
-- Consumo da API REST do backend.
-- Telas previstas:
-  - Login
-  - Lista de pacientes
-  - Detalhe/cadastro de paciente
-  - Agenda de consultas
-- Stack prevista:
-  - React, React Router ou Next.js
-  - Axios ou fetch para consumo da API
-  - Controle de sessão com JWT no frontend
+- Desenvolvimento de APIs REST seguras e testadas
+- Organização de código backend com Django
+- Criação de frontend moderno consumindo APIs
+- Boas práticas de Git, testes automatizados e documentação
 
 ---
 
-## Foco em boas práticas
+## Estrutura do Projeto
 
-Este projeto é construído com os seguintes pilares:
+Este repositório é organizado em duas pastas principais:
 
-- **Código limpo:**
-  - Nomenclatura clara, responsabilidade única por função/classe.
-  - DRY, KISS, SRP (Single Responsibility Principle).
-- **Segurança:**
-  - Senhas com hash seguro (padrão Django).
-  - Variáveis sensíveis em `.env` (não versionado).
-  - Autenticação JWT com tempos de expiração configuráveis.
-  - Permissões baseadas em papéis (`role`) nas APIs.
-- **Organização:**
-  - Commits semânticos (`feat`, `fix`, `docs`, `chore`, etc.).
-  - Separação clara de backend/frontend.
-  - Documentação de API via Swagger/Redoc.
+- `odonto-wudich-backend/` → API REST em Django / DRF
+- `odonto-wudich-frontend/` → Aplicação React (em desenvolvimento)
+
+Cada pasta possui seu próprio `README.md` com instruções de instalação e uso.
 
 ---
 
-## Como rodar o projeto localmente (backend)
+## Funcionalidades (Domínio da Aplicação)
 
-Dentro de `odonto-wudich-backend/`:
+O sistema foi pensado para atender uma clínica odontológica com:
+
+### Usuários
+
+- Usuários autenticados via **JWT** (login e refresh token).
+- Perfis de usuário com **papéis (roles)**:
+  - `dentist` – dentistas da clínica
+  - `secretary` – secretárias responsáveis pelo atendimento
+
+### Pacientes
+
+- Cadastro e gerenciamento de pacientes.
+- CPF único por paciente (validação em banco de dados).
+- Listagem, atualização e exclusão de pacientes.
+- Acesso aos endpoints restrito a usuários autenticados.
+
+### Consultas
+
+- Criação e gerenciamento de consultas odontológicas.
+- Campos principais:
+  - Paciente
+  - Dentista responsável
+  - Data/hora de início e fim
+  - Status da consulta:
+    - `scheduled`
+    - `completed`
+    - `canceled`
+- Regras de negócio relevantes:
+  - Dentista e secretária podem **agendar** consultas.
+  - Apenas o **dentista** pode marcar consultas como **`completed`**.
+  - Usuário não autenticado não tem acesso aos endpoints de consultas.
+
+---
+
+## Tecnologias
+
+### Backend
+
+- Python 3.12
+- Django 6
+- Django REST Framework
+- SimpleJWT (autenticação JWT)
+- drf-spectacular (documentação OpenAPI/Swagger)
+- SQLite (ambiente de desenvolvimento)
+- pytest + pytest-django + Faker (testes automatizados)
+
+### Frontend (planejado / em desenvolvimento)
+
+- React
+- React Router
+- Integração com a API via fetch/axios
+- Gerenciamento básico de estado
+
+---
+
+## Qualidade e Testes
+
+O backend conta com testes automatizados cobrindo:
+
+- **Modelo de Pacientes**
+  - Criação
+  - Unicidade de CPF
+  - Representação textual (`__str__`)
+
+- **API de Pacientes**
+  - Restrições de autenticação (401 para não autenticados)
+  - Permissões para dentistas e secretárias
+  - CRUD completo (listar, criar, detalhar, atualizar, deletar)
+
+- **API de Consultas**
+  - Criação de consultas por dentista e secretária
+  - Listagem e detalhe de consultas
+  - Regras de permissão:
+    - Apenas dentista pode concluir (`completed`)
+    - Ambos podem cancelar (`canceled`)
+    - Não autenticados não podem criar, listar ou atualizar
+
+Para detalhes completos dos testes e instruções de execução, consulte o README do backend:
+
+➡ [`odonto-wudich-backend/README.md`](./odonto-wudich-backend/README.md)
+
+---
+
+## Como rodar o projeto (visão geral)
+
+### 1. Backend (API)
+
+Instruções detalhadas em  
+[`odonto-wudich-backend/README.md`](./odonto-wudich-backend/README.md), mas o fluxo básico é:
 
 ```bash
-# 1) Criar e ativar o ambiente virtual
+cd odonto-wudich-backend
 python -m venv venv
-.\venv\Scripts\Activate.ps1  # Windows PowerShell
-# source venv/bin/activate   # Linux/macOS
-
-# 2) Instalar dependências
+venv\Scripts\activate  # Windows
 pip install -r requirements.txt
-
-# 3) Criar arquivo .env
-cp .env.example .env
-# edite .env com SECRET_KEY e demais configs
-
-# 4) Aplicar migrações e criar superusuário
 python manage.py migrate
-python manage.py createsuperuser
-
-# 5) Subir o servidor
 python manage.py runserver
 ```
 
-A API estará em `http://127.0.0.1:8000/api/`.
+A API ficará disponível em:
 
-### Documentação da API
+- `http://127.0.0.1:8000/api/`
 
-- Swagger UI: `http://127.0.0.1:8000/api/schema/swagger-ui/`
-- Redoc: `http://127.0.0.1:8000/api/schema/redoc/`
+### 2. Frontend (em desenvolvimento)
+
+Assim que a estrutura do frontend estiver criada, as instruções ficarão em:
+
+➡ `odonto-wudich-frontend/README.md`
+
+---
+
+## Próximos Passos
+
+- [ ] Implementar o frontend em React integrado à API:
+  - Tela de login (JWT)
+  - Listagem e cadastro de pacientes
+  - Listagem e agendamento de consultas
+- [ ] Adicionar paginação e filtros na API
+- [ ] Configurar deploy (backend + frontend) em ambiente de nuvem
+- [ ] Aumentar cobertura de testes automatizados
 
 ---
 
-## Objetivo deste projeto
+## Autor
 
-Este projeto foi desenvolvido com o objetivo de:
+**M@rkitowb**  
+Desenvolvedor Python | Django | APIs REST
 
-- Consolidar habilidades em **Django REST Framework** e **Python backend**.
-- Demonstrar preocupação com **segurança**, **permissões** e **estrutura de projeto**.
-- Servir como **projeto de portfólio** e para ajudar meu irmão no gerenciamento seus pacientes.
-
----
+- GitHub: [https://github.com/markitowb](https://github.com/markitowb)
+- LinkedIn: [https://www.linkedin.com/in/marcusviniciuswb](https://www.linkedin.com/in/marcusviniciuswb)
