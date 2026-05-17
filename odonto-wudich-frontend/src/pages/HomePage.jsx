@@ -44,28 +44,13 @@ function HomePage() {
         <nav style={{ display: "flex", gap: "1rem", marginTop: "1rem" }}>
           <button
             onClick={() => navigate("/patients")}
-            style={{
-              padding: "0.75rem 1.5rem",
-              background: "#0d6efd",
-              color: "#fff",
-              border: "none",
-              borderRadius: "4px",
-              cursor: "pointer",
-            }}
+            style={menuButtonStyle}
           >
             Pacientes
           </button>
-
           <button
             onClick={() => navigate("/appointments")}
-            style={{
-              padding: "0.75rem 1.5rem",
-              background: "#0d6efd",
-              color: "#fff",
-              border: "none",
-              borderRadius: "4px",
-              cursor: "pointer",
-            }}
+            style={menuButtonStyle}
           >
             Agendamentos
           </button>
@@ -74,5 +59,14 @@ function HomePage() {
     </main>
   );
 }
+
+const menuButtonStyle = {
+  padding: "0.75rem 1.5rem",
+  background: "#0d6efd",
+  color: "#fff",
+  border: "none",
+  borderRadius: "4px",
+  cursor: "pointer",
+};
 
 export default HomePage;

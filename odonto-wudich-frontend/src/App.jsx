@@ -3,20 +3,21 @@ import LoginPage from "./pages/LoginPage";
 import HomePage from "./pages/HomePage";
 import PatientsPage from "./pages/PatientsPage";
 import PatientFormPage from "./pages/PatientFormPage";
+import AppointmentsPage from "./pages/AppointmentsPage";
+import AppointmentFormPage from "./pages/AppointmentFormPage";
 import PrivateRoute from "./components/PrivateRoute";
-
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Redireciona a raiz para /login */}
+        {/* Raiz → /login */}
         <Route path="/" element={<Navigate to="/login" replace />} />
 
         {/* Rota pública */}
         <Route path="/login" element={<LoginPage />} />
 
-        {/* Rotas privadas – só acessíveis com token */}
+        {/* Rotas privadas */}
         <Route
           path="/home"
           element={
@@ -26,6 +27,7 @@ function App() {
           }
         />
 
+        {/* Pacientes */}
         <Route
           path="/patients"
           element={
@@ -34,7 +36,6 @@ function App() {
             </PrivateRoute>
           }
         />
-
         <Route
           path="/patients/new"
           element={
@@ -43,7 +44,6 @@ function App() {
             </PrivateRoute>
           }
         />
-
         <Route
           path="/patients/:id/edit"
           element={
@@ -53,7 +53,33 @@ function App() {
           }
         />
 
-        {/* Rota curinga – qualquer URL inválida vai para /login */}
+        {/* Agendamentos */}
+        <Route
+          path="/appointments"
+          element={
+            <PrivateRoute>
+              <AppointmentsPage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/appointments/new"
+          element={
+            <PrivateRoute>
+              <AppointmentFormPage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/appointments/:id/edit"
+          element={
+            <PrivateRoute>
+              <AppointmentFormPage />
+            </PrivateRoute>
+          }
+        />
+
+        {/* Rota curinga */}
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </BrowserRouter>
