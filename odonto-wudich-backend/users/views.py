@@ -17,19 +17,16 @@ class CustomTokenObtainPairView(TokenObtainPairView):
     """
     Endpoint de login. Retorna access e refresh token JWT.
     POST /api/users/token/
-    Body: { "username": "...", "password": "..." }
     """
-
     serializer_class = CustomTokenObtainPairSerializer
 
 
 class UserMeView(APIView):
     """
     Retorna os dados do usuário autenticado.
-    GET /api/users/me/
-    Requer: Authorization: Bearer <access_token>
+    GET  /api/users/me/
+    PATCH /api/users/me/
     """
-
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request: Request) -> Response:
@@ -37,11 +34,10 @@ class UserMeView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def patch(self, request: Request) -> Response:
-        """Permite ao usuário atualizar seus próprios dados."""
         serializer = UserUpdateSerializer(
             request.user,
             data=request.data,
-            partial=True,  # Permite atualização parcial (não precisa enviar todos os campos)
+            partial=True,
         )
         serializer.is_valid(raise_exception=True)
         serializer.save()
@@ -52,9 +48,21 @@ class UserRegisterView(generics.CreateAPIView):
     """
     Cria um novo usuário no sistema.
     POST /api/users/register/
-    Restrito a usuários staff (admin da clínica).
+    Restrito a admins.
     """
-
     queryset = CustomUser.objects.all()
     serializer_class = UserRegisterSerializer
-    permission_classes = [permissions.IsAdminUser]  # Apenas admins criam usuários
+    permission_classes = [permissions.IsAdminUser]
+
+
+class DentistListView(generics.ListAPIView):
+    """
+    Lista todos os usuários com role 'dentist'.
+    GET /api/users/dentists/
+    Requer autenticação.
+    """
+    serializer_class = UserSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return CustomUser.objects.filter(role="dentist")
