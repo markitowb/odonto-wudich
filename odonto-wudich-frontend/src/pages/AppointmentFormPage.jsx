@@ -27,13 +27,12 @@ function AppointmentFormPage() {
   // Carrega pacientes, dentistas e (se edição) dados do agendamento
   useEffect(() => {
     async function loadInitialData() {
-      const token = localStorage.getItem("accessToken");
 
       try {
         // Carrega pacientes e dentistas em paralelo
         const [patientsData, dentistsData] = await Promise.all([
-          apiGet("/patients/", token),
-          apiGet("/users/dentists/", token),
+          apiGet("/patients/"),
+          apiGet("/users/dentists/"),
         ]);
 
         setPatients(patientsData);
@@ -41,10 +40,7 @@ function AppointmentFormPage() {
 
         // Se for edição, carrega os dados do agendamento
         if (isEditing) {
-          const appointmentData = await apiGet(
-            `/appointments/${id}/`,
-            token
-          );
+          const appointmentData = await apiGet(`/appointments/${id}/`);
 
           // O serializer retorna patient (nome) e dentist (username) na leitura
           // mas para preencher o form precisamos dos IDs
@@ -86,14 +82,13 @@ function AppointmentFormPage() {
     setSuccessMessage("");
     setIsLoading(true);
 
-    const token = localStorage.getItem("accessToken");
 
     try {
       if (isEditing) {
-        await apiPatch(`/appointments/${id}/`, formData, token);
+        await apiPatch(`/appointments/${id}/`, formData);
         setSuccessMessage("Agendamento atualizado com sucesso!");
       } else {
-        await apiPost("/appointments/", formData, token);
+        await apiPost("/appointments/", formData);
         setSuccessMessage("Agendamento criado com sucesso!");
       }
 

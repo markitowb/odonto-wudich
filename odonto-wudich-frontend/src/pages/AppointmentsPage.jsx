@@ -17,10 +17,9 @@ function AppointmentsPage() {
     setIsLoading(true);
     setErrorMessage("");
 
-    const token = localStorage.getItem("accessToken");
 
     try {
-      const data = await apiGet("/appointments/", token);
+      const data = await apiGet("/appointments/");
       setAppointments(data);
     } catch (error) {
       console.error(error);
@@ -37,10 +36,9 @@ function AppointmentsPage() {
   async function handleDelete(appointmentId) {
     if (!window.confirm("Deseja excluir este agendamento?")) return;
 
-    const token = localStorage.getItem("accessToken");
 
     try {
-      await apiDelete(`/appointments/${appointmentId}/`, token);
+      await apiDelete(`/appointments/${appointmentId}/`);
       await loadAppointments();
     } catch (error) {
       console.error(error);

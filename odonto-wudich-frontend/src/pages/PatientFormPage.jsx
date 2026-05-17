@@ -30,9 +30,8 @@ function PatientFormPage() {
     if (!isEditing) return;
 
     async function loadPatient() {
-      const token = localStorage.getItem("accessToken");
       try {
-        const data = await apiGet(`/patients/${id}/`, token);
+        const data = await apiGet(`/patients/${id}/`);
         setFormData({
           full_name: data.full_name || "",
           email: data.email || "",
@@ -69,10 +68,10 @@ function PatientFormPage() {
 
     try {
       if (isEditing) {
-        await apiPatch(`/patients/${id}/`, formData, token);
+        await apiPatch(`/patients/${id}/`, formData);
         setSuccessMessage("Paciente atualizado com sucesso!");
       } else {
-        await apiPost("/patients/", formData, token);
+        await apiPost("/patients/", formData);
         setSuccessMessage("Paciente cadastrado com sucesso!");
       }
 

@@ -18,10 +18,9 @@ function PatientsPage() {
     setIsLoading(true);
     setErrorMessage("");
 
-    const token = localStorage.getItem("accessToken");
 
     try {
-      const data = await apiGet("/patients/", token);
+      const data = await apiGet("/patients/");
       setPatients(data);
     } catch (error) {
       console.error(error);
@@ -43,7 +42,7 @@ function PatientsPage() {
     const token = localStorage.getItem("accessToken");
 
     try {
-      await apiDelete(`/patients/${patientId}/`, token);
+      await apiDelete(`/patients/${patientId}/`);
       // Recarrega a lista após excluir
       await loadPatients();
     } catch (error) {
