@@ -1,8 +1,7 @@
-// src/pages/HomePage.jsx
 import { useEffect, useState } from "react";
 import { apiGet } from "../services/api";
 
-function HomePage() {
+function HomePage({ onLogout }) {
   const [patients, setPatients] = useState([]);
   const [statusMessage, setStatusMessage] = useState(
     "Tentando conectar à API..."
@@ -45,9 +44,43 @@ function HomePage() {
     loadPatients();
   }, []);
 
+  // -------------------------------------------------
+  // 4️⃣ Botão de logout
+  // -------------------------------------------------
+  function handleLogoutClick() {
+    // Pergunta ao usuário antes de sair (boa prática UX)
+    if (window.confirm("Deseja realmente sair?")) {
+      onLogout(); // limpa storage + atualiza estado no App
+    }
+  }
+
   return (
     <main style={{ padding: "2rem" }}>
-      <h1>Odonto Wudich</h1>
+      {/* Header com botão de logout */}
+      <header
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: "2rem",
+        }}
+      >
+        <h1>Odonto Wudich</h1>
+        <button
+          onClick={handleLogoutClick}
+          style={{
+            background: "#d9534f",
+            color: "#fff",
+            border: "none",
+            padding: "0.5rem 1rem",
+            borderRadius: "4px",
+            cursor: "pointer",
+          }}
+        >
+          Sair
+        </button>
+      </header>
+
       <p>Dashboard inicial da clínica odontológica.</p>
 
       <section style={{ marginTop: "2rem" }}>
@@ -103,7 +136,7 @@ function HomePage() {
                       padding: "0.5rem",
                     }}
                   >
-                    {patient.name}
+                    {patient.full_name}
                   </td>
                   <td
                     style={{

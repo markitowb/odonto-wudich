@@ -7,15 +7,19 @@ function App() {
     Boolean(localStorage.getItem("accessToken"))
   );
 
-  function handleLoginSuccess() {
-    setIsAuthenticated(true);
+  function handleLogout() {
+    // Remove tokens do storage
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
+    // Reseta o estado - força a exibição da tela de login
+    setIsAuthenticated(false);
   }
 
   if (!isAuthenticated) {
-    return <LoginPage onLoginSuccess={handleLoginSuccess} />;
+    return <LoginPage onLoginSuccess={() => setIsAuthenticated(true)} />;
   }
 
-  return <HomePage />;
+  return <HomePage onLogout={handleLogout} />;
 }
 
 export default App;
