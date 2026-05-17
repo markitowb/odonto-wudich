@@ -1,11 +1,15 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { usersPost } from "../services/api";
 
-function LoginPage({ onLoginSuccess }) {
+function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  // Hook do React Router para redirecionar após o login
+  const navigate = useNavigate();
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -13,22 +17,18 @@ function LoginPage({ onLoginSuccess }) {
     setIsLoading(true);
 
     try {
-      // Ajuste aqui conforme o payload do seu /api/token/ (username ou email)
       const data = await usersPost("/token/", {
-        username,          // se o backend espera "username", troque aqui
+        username,
         password,
       });
 
-      // data deve conter: { access: "...", refresh: "..." }
       const { access, refresh } = data;
 
-      // Armazenar o token (simples, mas suficiente para nosso início)
       localStorage.setItem("accessToken", access);
       localStorage.setItem("refreshToken", refresh);
 
-      if (onLoginSuccess) {
-        onLoginSuccess();
-      }
+      // Redireciona para a página principal após login bem-sucedido
+      navigate("/home", { replace: true });
     } catch (error) {
       console.error(error);
       if (error.status === 401 || error.status === 400) {
@@ -48,7 +48,7 @@ function LoginPage({ onLoginSuccess }) {
       <form onSubmit={handleSubmit} style={{ marginTop: "1.5rem" }}>
         <div style={{ marginBottom: "1rem" }}>
           <label style={{ display: "block", marginBottom: "0.5rem" }}>
-            Usuário ou Email
+            Usuário
           </label>
           <input
             type="text"

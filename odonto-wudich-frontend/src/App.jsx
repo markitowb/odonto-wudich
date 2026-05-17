@@ -1,25 +1,41 @@
-import { useState } from "react";
-import HomePage from "./pages/HomePage";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import LoginPage from "./pages/LoginPage";
+import HomePage from "./pages/HomePage";
+import PrivateRoute from "./components/PrivateRoute";
 
+/**
+ * Componente raiz da aplicação.
+ *
+ * Responsabilidades:
+ * - Configurar o roteamento da aplicação.
+ * - Proteger rotas privadas com PrivateRoute.
+ * - Redirecionar / para /login por padrão.
+ */
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(
-    Boolean(localStorage.getItem("accessToken"))
+  return (
+    <BrowserRouter>
+      <Routes>
+        {/* Redireciona a raiz para /login */}
+        <Route path="/" element={<Navigate to="/login" replace />} />
+
+        {/* Rota pública */}
+        <Route path="/login" element={<LoginPage />} />
+
+        {/* Rotas privadas – só acessíveis com token */}
+        <Route
+          path="/home"
+          element={
+            <PrivateRoute>
+              <HomePage />
+            </PrivateRoute>
+          }
+        />
+
+        {/* Rota curinga – qualquer URL inválida vai para /login */}
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      </Routes>
+    </BrowserRouter>
   );
-
-  function handleLogout() {
-    // Remove tokens do storage
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("refreshToken");
-    // Reseta o estado - força a exibição da tela de login
-    setIsAuthenticated(false);
-  }
-
-  if (!isAuthenticated) {
-    return <LoginPage onLoginSuccess={() => setIsAuthenticated(true)} />;
-  }
-
-  return <HomePage onLogout={handleLogout} />;
 }
 
 export default App;

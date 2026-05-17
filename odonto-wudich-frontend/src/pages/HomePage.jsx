@@ -1,12 +1,15 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { apiGet } from "../services/api";
 
-function HomePage({ onLogout }) {
+function HomePage() {
   const [patients, setPatients] = useState([]);
   const [statusMessage, setStatusMessage] = useState(
     "Tentando conectar à API..."
   );
   const [isLoading, setIsLoading] = useState(true);
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     async function loadPatients() {
@@ -44,19 +47,18 @@ function HomePage({ onLogout }) {
     loadPatients();
   }, []);
 
-  // -------------------------------------------------
-  // 4️⃣ Botão de logout
-  // -------------------------------------------------
   function handleLogoutClick() {
-    // Pergunta ao usuário antes de sair (boa prática UX)
     if (window.confirm("Deseja realmente sair?")) {
-      onLogout(); // limpa storage + atualiza estado no App
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
+
+      // Redireciona para /login após limpar os tokens
+      navigate("/login", { replace: true });
     }
   }
 
   return (
     <main style={{ padding: "2rem" }}>
-      {/* Header com botão de logout */}
       <header
         style={{
           display: "flex",
@@ -151,16 +153,6 @@ function HomePage({ onLogout }) {
             </tbody>
           </table>
         )}
-      </section>
-
-      <section style={{ marginTop: "2rem" }}>
-        <h2>O que você poderá fazer aqui</h2>
-        <ul>
-          <li>Fazer login com usuário da clínica (dentista ou secretária);</li>
-          <li>Gerenciar pacientes;</li>
-          <li>Agendar e acompanhar consultas;</li>
-          <li>Integrar todas as telas com a API em Django REST Framework.</li>
-        </ul>
       </section>
     </main>
   );
