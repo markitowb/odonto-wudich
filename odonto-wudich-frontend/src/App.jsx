@@ -1,16 +1,11 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import LoginPage from "./pages/LoginPage";
 import HomePage from "./pages/HomePage";
+import PatientsPage from "./pages/PatientsPage";
+import PatientFormPage from "./pages/PatientFormPage";
 import PrivateRoute from "./components/PrivateRoute";
 
-/**
- * Componente raiz da aplicação.
- *
- * Responsabilidades:
- * - Configurar o roteamento da aplicação.
- * - Proteger rotas privadas com PrivateRoute.
- * - Redirecionar / para /login por padrão.
- */
+
 function App() {
   return (
     <BrowserRouter>
@@ -27,6 +22,33 @@ function App() {
           element={
             <PrivateRoute>
               <HomePage />
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/patients"
+          element={
+            <PrivateRoute>
+              <PatientsPage />
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/patients/new"
+          element={
+            <PrivateRoute>
+              <PatientFormPage />
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/patients/:id/edit"
+          element={
+            <PrivateRoute>
+              <PatientFormPage />
             </PrivateRoute>
           }
         />
