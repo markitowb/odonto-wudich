@@ -28,6 +28,12 @@ class AppointmentSerializer(serializers.ModelSerializer):
         source="patient.full_name",
         read_only=True,
     )
+
+    patient_detail_id = serializers.IntegerField(
+        source="patient.id",
+        read_only=True,
+    )
+
     dentist = serializers.CharField(
         source="dentist.username",
         read_only=True,
@@ -38,6 +44,7 @@ class AppointmentSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "patient",
+            "patient_detail_id",
             "patient_id",
             "dentist",
             "dentist_id",

@@ -1,12 +1,17 @@
 from rest_framework import serializers
-
 from .models import Patient
+from .validators import validate_cpf
 
 
 class PatientSerializer(serializers.ModelSerializer):
     """
     Usado para listar, detalhar, criar e atualizar pacientes.
     """
+    cpf = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        validators=[validate_cpf],
+    )
 
     class Meta:
         model = Patient

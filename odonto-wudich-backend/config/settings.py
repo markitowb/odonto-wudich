@@ -101,8 +101,8 @@ SPECTACULAR_SETTINGS = {
 }
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=5),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30), # Em dev 30, em prod pode ser 15 ou 20
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7), # Em dev 7, em prod pode ser 1 ou 2
     "ROTATE_REFRESH_TOKENS": True,       # Gera novo refresh a cada uso
     "BLACKLIST_AFTER_ROTATION": False,   # Sem blacklist por enquanto
     "AUTH_HEADER_TYPES": ("Bearer",),
