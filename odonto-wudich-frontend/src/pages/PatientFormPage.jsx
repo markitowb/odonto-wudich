@@ -1,12 +1,40 @@
-// src/pages/PatientFormPage.jsx
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+
+import Box from "@mui/material/Box";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
+import Typography from "@mui/material/Typography";
+import TextField from "@mui/material/TextField";
+import MenuItem from "@mui/material/MenuItem";
+import Button from "@mui/material/Button";
+import Stack from "@mui/material/Stack";
+import Alert from "@mui/material/Alert";
+import CircularProgress from "@mui/material/CircularProgress";
+
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import dayjs from "dayjs";
+import "dayjs/locale/pt-br";
+
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import SaveIcon from "@mui/icons-material/Save";
+import PersonAddIcon from "@mui/icons-material/PersonAdd";
+
 import { apiGet, apiPost, apiPatch } from "../services/api";
+import CpfField from "../components/CpfField";
+import PhoneField from "../components/PhoneField";
 
-function PatientFormPage() {
-  const { id } = useParams(); // undefined se for criação, número se for edição
+const GENDER_OPTIONS = [
+  { value: "M", label: "Masculino" },
+  { value: "F", label: "Feminino" },
+  { value: "O", label: "Outro" },
+];
+
+export default function PatientFormPage() {
+  const { id } = useParams();
   const isEditing = Boolean(id);
-
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
@@ -25,7 +53,6 @@ function PatientFormPage() {
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
-  // Se for edição, carrega os dados do paciente
   useEffect(() => {
     if (!isEditing) return;
 
@@ -64,8 +91,6 @@ function PatientFormPage() {
     setSuccessMessage("");
     setIsLoading(true);
 
-    const token = localStorage.getItem("accessToken");
-
     try {
       if (isEditing) {
         await apiPatch(`/patients/${id}/`, formData);
@@ -74,8 +99,6 @@ function PatientFormPage() {
         await apiPost("/patients/", formData);
         setSuccessMessage("Paciente cadastrado com sucesso!");
       }
-
-      // Aguarda 1 segundo para o usuário ler a mensagem e redireciona
       setTimeout(() => navigate("/patients"), 1000);
     } catch (error) {
       console.error(error);
@@ -90,165 +113,182 @@ function PatientFormPage() {
   }
 
   if (isFetching) {
-    return <p style={{ padding: "2rem" }}>Carregando dados do paciente...</p>;
+    return (
+      <Box sx={{ display: "flex", justifyContent: "center", mt: 6 }}>
+        <CircularProgress />
+      </Box>
+    );
   }
 
   return (
-    <main style={{ padding: "2rem", maxWidth: "600px", margin: "0 auto" }}>
-      <header
-        style={{
+    <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+      {/* Cabeçalho */}
+      <Box
+        sx={{
+          width: "100%",
+          maxWidth: 640,
+          mb: 3,
           display: "flex",
-          justifyContent: "space-between",
           alignItems: "center",
-          marginBottom: "2rem",
+          justifyContent: "space-between",
         }}
       >
-        <h1>{isEditing ? "Editar Paciente" : "Novo Paciente"}</h1>
-        <button
+        <Typography variant="h4">
+          {isEditing ? "Editar Paciente" : "Novo Paciente"}
+        </Typography>
+
+        <Button
+          variant="outlined"
+          startIcon={<ArrowBackIcon />}
           onClick={() => navigate("/patients")}
-          style={{
-            padding: "0.5rem 1rem",
-            background: "#6c757d",
-            color: "#fff",
-            border: "none",
-            borderRadius: "4px",
-            cursor: "pointer",
-          }}
         >
           Voltar
-        </button>
-      </header>
+        </Button>
+      </Box>
 
+      {/* Alertas */}
       {errorMessage && (
-        <p style={{ color: "red", marginBottom: "1rem" }}>{errorMessage}</p>
+        <Alert severity="error" sx={{ mb: 2, width: "100%", maxWidth: 640 }}>
+          {errorMessage}
+        </Alert>
       )}
       {successMessage && (
-        <p style={{ color: "green", marginBottom: "1rem" }}>{successMessage}</p>
+        <Alert severity="success" sx={{ mb: 2, width: "100%", maxWidth: 640 }}>
+          {successMessage}
+        </Alert>
       )}
 
-      <form onSubmit={handleSubmit}>
-        <div style={fieldStyle}>
-          <label style={labelStyle}>Nome completo *</label>
-          <input
-            type="text"
-            name="full_name"
-            value={formData.full_name}
-            onChange={handleChange}
-            required
-            style={inputStyle}
-          />
-        </div>
+      {/* Formulário */}
+      <Card sx={{ width: "100%", maxWidth: 640 }}>
+        <CardContent sx={{ p: 3 }}>
+          <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="pt-br">
+            <Box component="form" onSubmit={handleSubmit}>
+              <Stack spacing={2}>
+                <TextField
+                  label="Nome completo"
+                  name="full_name"
+                  value={formData.full_name}
+                  onChange={handleChange}
+                  required
+                  fullWidth
+                />
 
-        <div style={fieldStyle}>
-          <label style={labelStyle}>Email *</label>
-          <input
-            type="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            required
-            style={inputStyle}
-          />
-        </div>
+                <TextField
+                  label="Email"
+                  name="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  required
+                  fullWidth
+                />
 
-        <div style={fieldStyle}>
-          <label style={labelStyle}>Telefone</label>
-          <input
-            type="text"
-            name="phone_number"
-            value={formData.phone_number}
-            onChange={handleChange}
-            style={inputStyle}
-          />
-        </div>
+                <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+                  <PhoneField
+                    value={formData.phone_number}
+                    onChange={(digits) =>
+                      setFormData((prev) => ({ ...prev, phone_number: digits }))
+                    }
+                    fullWidth
+                  />
 
-        <div style={fieldStyle}>
-          <label style={labelStyle}>CPF</label>
-          <input
-            type="text"
-            name="cpf"
-            value={formData.cpf}
-            onChange={handleChange}
-            style={inputStyle}
-          />
-        </div>
+                  <CpfField
+                    value={formData.cpf}
+                    onChange={(digits) =>
+                      setFormData((prev) => ({ ...prev, cpf: digits }))
+                    }
+                    fullWidth
+                  />
+                </Stack>
 
-        <div style={fieldStyle}>
-          <label style={labelStyle}>Data de nascimento</label>
-          <input
-            type="date"
-            name="date_of_birth"
-            value={formData.date_of_birth}
-            onChange={handleChange}
-            style={inputStyle}
-          />
-        </div>
+                <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+                  <DatePicker
+                    label="Data de nascimento"
+                    value={
+                      formData.date_of_birth
+                        ? dayjs(formData.date_of_birth)
+                        : null
+                    }
+                    onChange={(newValue) => {
+                      setFormData((prev) => ({
+                        ...prev,
+                        // Salva como "YYYY-MM-DD" que o backend Django espera
+                        date_of_birth: newValue
+                          ? newValue.format("YYYY-MM-DD")
+                          : "",
+                      }));
+                    }}
+                    format="DD/MM/YYYY" // Exibe no formato brasileiro
+                    slotProps={{
+                      textField: {
+                        fullWidth: true,
+                      },
+                    }}
+                  />
 
-        <div style={fieldStyle}>
-          <label style={labelStyle}>Gênero</label>
-          <select
-            name="gender"
-            value={formData.gender}
-            onChange={handleChange}
-            style={inputStyle}
-          >
-            <option value="">Selecione...</option>
-            <option value="M">Masculino</option>
-            <option value="F">Feminino</option>
-            <option value="O">Outro</option>
-          </select>
-        </div>
+                  <TextField
+                    label="Gênero"
+                    name="gender"
+                    value={formData.gender}
+                    onChange={handleChange}
+                    select
+                    fullWidth
+                  >
+                    <MenuItem value="">Selecione...</MenuItem>
+                    {GENDER_OPTIONS.map((opt) => (
+                      <MenuItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                </Stack>
 
-        <div style={fieldStyle}>
-          <label style={labelStyle}>Endereço</label>
-          <input
-            type="text"
-            name="address"
-            value={formData.address}
-            onChange={handleChange}
-            style={inputStyle}
-          />
-        </div>
+                <TextField
+                  label="Endereço"
+                  name="address"
+                  value={formData.address}
+                  onChange={handleChange}
+                  fullWidth
+                />
 
-        <div style={fieldStyle}>
-          <label style={labelStyle}>Observações</label>
-          <textarea
-            name="notes"
-            value={formData.notes}
-            onChange={handleChange}
-            rows={3}
-            style={inputStyle}
-          />
-        </div>
+                <TextField
+                  label="Observações"
+                  name="notes"
+                  value={formData.notes}
+                  onChange={handleChange}
+                  multiline
+                  rows={3}
+                  fullWidth
+                />
 
-        <button
-          type="submit"
-          disabled={isLoading}
-          style={{
-            marginTop: "1rem",
-            padding: "0.75rem 1.5rem",
-            background: isEditing ? "#0d6efd" : "#198754",
-            color: "#fff",
-            border: "none",
-            borderRadius: "4px",
-            cursor: isLoading ? "not-allowed" : "pointer",
-            width: "100%",
-          }}
-        >
-          {isLoading
-            ? "Salvando..."
-            : isEditing
-            ? "Salvar alterações"
-            : "Cadastrar paciente"}
-        </button>
-      </form>
-    </main>
+                <Button
+                  type="submit"
+                  variant="contained"
+                  color={isEditing ? "primary" : "success"}
+                  size="large"
+                  disabled={isLoading}
+                  startIcon={
+                    isLoading ? (
+                      <CircularProgress size={18} color="inherit" />
+                    ) : isEditing ? (
+                      <SaveIcon />
+                    ) : (
+                      <PersonAddIcon />
+                    )
+                  }
+                  fullWidth
+                >
+                  {isLoading
+                    ? "Salvando..."
+                    : isEditing
+                    ? "Salvar alterações"
+                    : "Cadastrar paciente"}
+                </Button>
+              </Stack>
+            </Box>
+          </LocalizationProvider>
+        </CardContent>
+      </Card>
+    </Box>
   );
 }
-
-// Estilos inline reutilizáveis para o formulário
-const fieldStyle = { marginBottom: "1rem" };
-const labelStyle = { display: "block", marginBottom: "0.25rem" };
-const inputStyle = { width: "100%", padding: "0.5rem", boxSizing: "border-box" };
-
-export default PatientFormPage;

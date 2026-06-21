@@ -1,89 +1,42 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+
+import Layout from "./components/Layout";
+import PrivateRoute from "./components/PrivateRoute";
+
 import LoginPage from "./pages/LoginPage";
 import HomePage from "./pages/HomePage";
 import PatientsPage from "./pages/PatientsPage";
 import PatientFormPage from "./pages/PatientFormPage";
 import AppointmentsPage from "./pages/AppointmentsPage";
 import AppointmentFormPage from "./pages/AppointmentFormPage";
-import PrivateRoute from "./components/PrivateRoute";
 
-function App() {
+export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Raiz → /login */}
-        <Route path="/" element={<Navigate to="/login" replace />} />
-
         {/* Rota pública */}
         <Route path="/login" element={<LoginPage />} />
 
-        {/* Rotas privadas */}
+        {/* Rotas privadas com Layout */}
         <Route
-          path="/home"
           element={
             <PrivateRoute>
-              <HomePage />
+              <Layout />
             </PrivateRoute>
           }
-        />
+        >
+          <Route path="/home" element={<HomePage />} />
+          <Route path="/patients" element={<PatientsPage />} />
+          <Route path="/patients/new" element={<PatientFormPage />} />
+          <Route path="/patients/:id/edit" element={<PatientFormPage />} />
+          <Route path="/appointments" element={<AppointmentsPage />} />
+          <Route path="/appointments/new" element={<AppointmentFormPage />} />
+          <Route path="/appointments/:id/edit" element={<AppointmentFormPage />} />
+        </Route>
 
-        {/* Pacientes */}
-        <Route
-          path="/patients"
-          element={
-            <PrivateRoute>
-              <PatientsPage />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/patients/new"
-          element={
-            <PrivateRoute>
-              <PatientFormPage />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/patients/:id/edit"
-          element={
-            <PrivateRoute>
-              <PatientFormPage />
-            </PrivateRoute>
-          }
-        />
-
-        {/* Agendamentos */}
-        <Route
-          path="/appointments"
-          element={
-            <PrivateRoute>
-              <AppointmentsPage />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/appointments/new"
-          element={
-            <PrivateRoute>
-              <AppointmentFormPage />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/appointments/:id/edit"
-          element={
-            <PrivateRoute>
-              <AppointmentFormPage />
-            </PrivateRoute>
-          }
-        />
-
-        {/* Rota curinga */}
+        {/* Qualquer outra rota vai para login */}
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </BrowserRouter>
   );
 }
-
-export default App;

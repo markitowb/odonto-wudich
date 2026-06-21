@@ -1,199 +1,136 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { apiGet, apiDelete } from "../services/api";
 
-function AppointmentsPage() {
-  const [appointments, setAppointments] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState("");
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+import CircularProgress from "@mui/material/CircularProgress";
+import Alert from "@mui/material/Alert";
 
+import dayjs from "dayjs";
+
+import { apiGet } from "../services/api";
+import MiniCalendar from "../components/calendar/MiniCalendar";
+import WeekGrid from "../components/calendar/WeekGrid";
+import AppointmentModal from "../components/calendar/AppointmentModal";
+import { getWeekStart } from "../utils/calendarHelpers";
+
+export default function AppointmentsPage() {
   const navigate = useNavigate();
 
-  useEffect(() => {
-    loadAppointments();
-  }, []);
+  const [appointments, setAppointments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  async function loadAppointments() {
-    setIsLoading(true);
-    setErrorMessage("");
+  const [selectedDate, setSelectedDate] = useState(dayjs());
+  const [weekStart, setWeekStart] = useState(getWeekStart(dayjs()));
+  const [selectedAppointment, setSelectedAppointment] = useState(null);
 
+  async function fetchAppointments() {
+    setLoading(true);
+    setError("");
 
     try {
       const data = await apiGet("/appointments/");
       setAppointments(data);
-    } catch (error) {
-      console.error(error);
-      if (error.status === 401) {
+    } catch (err) {
+      console.error(err);
+      if (err.status === 401) {
         navigate("/login", { replace: true });
       } else {
-        setErrorMessage("Erro ao carregar agendamentos. Tente novamente.");
+        setError("Erro ao carregar agendamentos. Tente novamente.");
       }
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   }
 
-  async function handleDelete(appointmentId) {
-    if (!window.confirm("Deseja excluir este agendamento?")) return;
+  useEffect(() => {
+    fetchAppointments();
+  }, []);
 
-
-    try {
-      await apiDelete(`/appointments/${appointmentId}/`);
-      await loadAppointments();
-    } catch (error) {
-      console.error(error);
-      setErrorMessage("Erro ao excluir agendamento. Tente novamente.");
-    }
+  function handleDateChange(newDate) {
+    setSelectedDate(newDate);
+    setWeekStart(getWeekStart(newDate));
   }
 
-  function formatDateTime(isoString) {
-    if (!isoString) return "-";
-
-    // Não deixar o JavaScript ajustar automaticamente o fuso.
-    // Vamos tratar a string "yyyy-MM-ddTHH:mm:ssZ" como se já estivesse no horário local.
-    const [datePart, timePartWithZone] = isoString.split("T");
-    const [year, month, day] = datePart.split("-");
-    const timePart = timePartWithZone.slice(0, 5); // "HH:mm"
-
-    return `${day}/${month}/${year} ${timePart}`;
+  function handleWeekChange(newDate) {
+    setSelectedDate(newDate);
+    setWeekStart(getWeekStart(newDate));
   }
 
-  // Traduz o status para português
-  function translateStatus(status) {
-    const map = {
-      scheduled: "Agendada",
-      completed: "Concluída",
-      canceled: "Cancelada",
-    };
-    return map[status] || status;
+  function handleSlotClick({ date, hour }) {
+    const dateParam = date.hour(hour).minute(0).format("YYYY-MM-DD");
+    const timeParam = date.hour(hour).minute(0).format("HH:mm");
+    navigate(`/appointments/new?date=${dateParam}&time=${timeParam}`);
   }
 
   return (
-    <main style={{ padding: "2rem" }}>
-      <header
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: "2rem",
-        }}
-      >
-        <h1>Agendamentos</h1>
-        <div style={{ display: "flex", gap: "1rem" }}>
-          <button
-            onClick={() => navigate("/home")}
-            style={{
-              padding: "0.5rem 1rem",
-              background: "#6c757d",
-              color: "#fff",
-              border: "none",
-              borderRadius: "4px",
-              cursor: "pointer",
-            }}
-          >
-            Voltar
-          </button>
-          <button
-            onClick={() => navigate("/appointments/new")}
-            style={{
-              padding: "0.5rem 1rem",
-              background: "#198754",
-              color: "#fff",
-              border: "none",
-              borderRadius: "4px",
-              cursor: "pointer",
-            }}
-          >
-            + Novo Agendamento
-          </button>
-        </div>
-      </header>
+    <Box>
+      {/* Título centralizado */}
+      <Box sx={{ mb: 3, textAlign: "center" }}>
+        <Typography variant="h4" gutterBottom>
+          Agenda semanal
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          Visualização semanal dos agendamentos da clínica.
+        </Typography>
+      </Box>
 
-      {isLoading && <p>Carregando agendamentos...</p>}
-
-      {errorMessage && (
-        <p style={{ color: "red" }}>{errorMessage}</p>
+      {/* Erro */}
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
       )}
 
-      {!isLoading && appointments.length === 0 && (
-        <p>Nenhum agendamento cadastrado.</p>
+      {/* Loading ou conteúdo */}
+      {loading ? (
+        <Box sx={{ display: "flex", justifyContent: "center", mt: 6 }}>
+          <CircularProgress />
+        </Box>
+      ) : (
+        /*
+          Layout de duas colunas usando apenas Box + flexbox.
+          Sem Grid do MUI para evitar as variáveis CSS
+          --Grid-columnSpacing que causam desalinhamento.
+        */
+        <Box
+          sx={{
+            display: "flex",
+            gap: 3,
+            alignItems: "flex-start",
+          }}
+        >
+          {/* Coluna esquerda: mini calendário */}
+          <Box sx={{ flexShrink: 0 }}>
+            <MiniCalendar
+              selectedDate={selectedDate}
+              onChange={handleDateChange}
+            />
+          </Box>
+
+          {/* Coluna direita: grade semanal */}
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <WeekGrid
+              weekStart={weekStart}
+              selectedDate={selectedDate}
+              appointments={appointments}
+              onChangeWeek={handleWeekChange}
+              onSlotClick={handleSlotClick}
+              onAppointmentClick={(appointment) =>
+                setSelectedAppointment(appointment)
+              }
+            />
+          </Box>
+        </Box>
       )}
 
-      {!isLoading && appointments.length > 0 && (
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
-          <thead>
-            <tr>
-              <th style={thStyle}>Paciente</th>
-              <th style={thStyle}>Dentista</th>
-              <th style={thStyle}>Início</th>
-              <th style={thStyle}>Fim</th>
-              <th style={thStyle}>Status</th>
-              <th style={thStyle}>Ações</th>
-            </tr>
-          </thead>
-          <tbody>
-            {appointments.map((appointment) => (
-              <tr key={appointment.id}>
-                <td style={tdStyle}>{appointment.patient}</td>
-                <td style={tdStyle}>{appointment.dentist}</td>
-                <td style={tdStyle}>
-                  {formatDateTime(appointment.start_datetime)}
-                </td>
-                <td style={tdStyle}>
-                  {formatDateTime(appointment.end_datetime)}
-                </td>
-                <td style={tdStyle}>
-                  {translateStatus(appointment.status)}
-                </td>
-                <td style={tdStyle}>
-                  <button
-                    onClick={() =>
-                      navigate(`/appointments/${appointment.id}/edit`)
-                    }
-                    style={{
-                      marginRight: "0.5rem",
-                      padding: "0.25rem 0.75rem",
-                      background: "#0d6efd",
-                      color: "#fff",
-                      border: "none",
-                      borderRadius: "4px",
-                      cursor: "pointer",
-                    }}
-                  >
-                    Editar
-                  </button>
-                  <button
-                    onClick={() => handleDelete(appointment.id)}
-                    style={{
-                      padding: "0.25rem 0.75rem",
-                      background: "#d9534f",
-                      color: "#fff",
-                      border: "none",
-                      borderRadius: "4px",
-                      cursor: "pointer",
-                    }}
-                  >
-                    Excluir
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-    </main>
+      {/* Modal de detalhes do agendamento */}
+      <AppointmentModal
+        open={Boolean(selectedAppointment)}
+        appointment={selectedAppointment}
+        onClose={() => setSelectedAppointment(null)}
+      />
+    </Box>
   );
 }
-
-const thStyle = {
-  borderBottom: "2px solid #444",
-  textAlign: "left",
-  padding: "0.75rem 0.5rem",
-};
-
-const tdStyle = {
-  borderBottom: "1px solid #333",
-  padding: "0.75rem 0.5rem",
-};
-
-export default AppointmentsPage;

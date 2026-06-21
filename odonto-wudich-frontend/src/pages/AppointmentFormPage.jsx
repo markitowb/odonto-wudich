@@ -1,18 +1,62 @@
-// src/pages/AppointmentFormPage.jsx
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+
+import Box from "@mui/material/Box";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
+import Typography from "@mui/material/Typography";
+import TextField from "@mui/material/TextField";
+import MenuItem from "@mui/material/MenuItem";
+import Button from "@mui/material/Button";
+import Stack from "@mui/material/Stack";
+import Alert from "@mui/material/Alert";
+import CircularProgress from "@mui/material/CircularProgress";
+
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import dayjs from "dayjs";
+import "dayjs/locale/pt-br";
+
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import SaveIcon from "@mui/icons-material/Save";
+import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
+
 import { apiGet, apiPost, apiPatch } from "../services/api";
 
-function AppointmentFormPage() {
+const STATUS_OPTIONS = [
+  { value: "scheduled", label: "Agendada" },
+  { value: "completed", label: "Concluída" },
+  { value: "canceled", label: "Cancelada" },
+];
+
+export default function AppointmentFormPage() {
   const { id } = useParams();
   const isEditing = Boolean(id);
   const navigate = useNavigate();
 
+  const [searchParams] = useSearchParams();
+  const dateParam = searchParams.get("date"); // ex: "2026-06-03"
+  const timeParam = searchParams.get("time"); // ex: "15:00"
+
+  // Valor inicial do DateTimePicker de início:
+  // - Se vier da URL (?date=...&time=...), usa esses valores
+  // - Senão, usa hoje às 08:00
+  const initialStartDateTime =
+    dateParam && timeParam
+      ? dayjs(`${dateParam}T${timeParam}`)
+      : dayjs().hour(8).minute(0).second(0).millisecond(0);
+
+  // Estado do DateTimePicker de início
+  const [startDateTime, setStartDateTime] = useState(initialStartDateTime);
+
+  // Estado do DateTimePicker de fim
+  const [endDateTime, setEndDateTime] = useState(null);
+
+  // Demais campos do formulário
   const [formData, setFormData] = useState({
     patient_id: "",
     dentist_id: "",
-    start_datetime: "",
-    end_datetime: "",
     status: "scheduled",
     notes: "",
   });
@@ -24,12 +68,9 @@ function AppointmentFormPage() {
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
-  // Carrega pacientes, dentistas e (se edição) dados do agendamento
   useEffect(() => {
     async function loadInitialData() {
-
       try {
-        // Carrega pacientes e dentistas em paralelo
         const [patientsData, dentistsData] = await Promise.all([
           apiGet("/patients/"),
           apiGet("/users/dentists/"),
@@ -38,21 +79,24 @@ function AppointmentFormPage() {
         setPatients(patientsData);
         setDentists(dentistsData);
 
-        // Se for edição, carrega os dados do agendamento
+        // Se for edição, carrega os dados do agendamento existente
         if (isEditing) {
           const appointmentData = await apiGet(`/appointments/${id}/`);
 
-          // O serializer retorna patient (nome) e dentist (username) na leitura
-          // mas para preencher o form precisamos dos IDs
-          // Por isso usamos patient_id e dentist_id que vêm do objeto
           setFormData({
             patient_id: appointmentData.patient_id ?? "",
             dentist_id: appointmentData.dentist_id ?? "",
-            start_datetime: formatForInput(appointmentData.start_datetime),
-            end_datetime: formatForInput(appointmentData.end_datetime),
             status: appointmentData.status,
             notes: appointmentData.notes || "",
           });
+
+          // Preenche os DateTimePickers com os valores do agendamento
+          if (appointmentData.start_datetime) {
+            setStartDateTime(dayjs(appointmentData.start_datetime));
+          }
+          if (appointmentData.end_datetime) {
+            setEndDateTime(dayjs(appointmentData.end_datetime));
+          }
         }
       } catch (error) {
         console.error(error);
@@ -65,12 +109,6 @@ function AppointmentFormPage() {
     loadInitialData();
   }, [id, isEditing]);
 
-  // Converte "2026-05-17T10:00:00Z" → "2026-05-17T10:00" (formato aceito pelo input datetime-local)
-  function formatForInput(isoString) {
-    if (!isoString) return "";
-    return isoString.slice(0, 16);
-  }
-
   function handleChange(event) {
     const { name, value } = event.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -82,16 +120,30 @@ function AppointmentFormPage() {
     setSuccessMessage("");
     setIsLoading(true);
 
+    // payload montado aqui dentro do handleSubmit,
+    // depois que todos os estados já existem e têm valor
+    const payload = {
+      patient_id: formData.patient_id,
+      dentist_id: formData.dentist_id,
+      // Converte os objetos dayjs para string ISO com fuso horário
+      start_datetime: startDateTime
+        ? startDateTime.format("YYYY-MM-DDTHH:mm:ssZ")
+        : "",
+      end_datetime: endDateTime
+        ? endDateTime.format("YYYY-MM-DDTHH:mm:ssZ")
+        : "",
+      status: formData.status,
+      notes: formData.notes,
+    };
 
     try {
       if (isEditing) {
-        await apiPatch(`/appointments/${id}/`, formData);
+        await apiPatch(`/appointments/${id}/`, payload);
         setSuccessMessage("Agendamento atualizado com sucesso!");
       } else {
-        await apiPost("/appointments/", formData);
+        await apiPost("/appointments/", payload);
         setSuccessMessage("Agendamento criado com sucesso!");
       }
-
       setTimeout(() => navigate("/appointments"), 1000);
     } catch (error) {
       console.error(error);
@@ -106,166 +158,181 @@ function AppointmentFormPage() {
   }
 
   if (isFetching) {
-    return <p style={{ padding: "2rem" }}>Carregando...</p>;
+    return (
+      <Box sx={{ display: "flex", justifyContent: "center", mt: 6 }}>
+        <CircularProgress />
+      </Box>
+    );
   }
 
   return (
-    <main style={{ padding: "2rem", maxWidth: "600px", margin: "0 auto" }}>
-      <header
-        style={{
+    <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+      {/* Cabeçalho */}
+      <Box
+        sx={{
+          width: "100%",
+          maxWidth: 640,
+          mb: 3,
           display: "flex",
-          justifyContent: "space-between",
           alignItems: "center",
-          marginBottom: "2rem",
+          justifyContent: "space-between",
         }}
       >
-        <h1>{isEditing ? "Editar Agendamento" : "Novo Agendamento"}</h1>
-        <button
+        <Typography variant="h4">
+          {isEditing ? "Editar Agendamento" : "Novo Agendamento"}
+        </Typography>
+
+        <Button
+          variant="outlined"
+          startIcon={<ArrowBackIcon />}
           onClick={() => navigate("/appointments")}
-          style={{
-            padding: "0.5rem 1rem",
-            background: "#6c757d",
-            color: "#fff",
-            border: "none",
-            borderRadius: "4px",
-            cursor: "pointer",
-          }}
         >
           Voltar
-        </button>
-      </header>
+        </Button>
+      </Box>
 
+      {/* Alertas */}
       {errorMessage && (
-        <p style={{ color: "red", marginBottom: "1rem" }}>{errorMessage}</p>
+        <Alert severity="error" sx={{ mb: 2, width: "100%", maxWidth: 640 }}>
+          {errorMessage}
+        </Alert>
       )}
       {successMessage && (
-        <p style={{ color: "green", marginBottom: "1rem" }}>{successMessage}</p>
+        <Alert severity="success" sx={{ mb: 2, width: "100%", maxWidth: 640 }}>
+          {successMessage}
+        </Alert>
       )}
 
-      <form onSubmit={handleSubmit}>
-        {/* Paciente */}
-        <div style={fieldStyle}>
-          <label style={labelStyle}>Paciente *</label>
-          <select
-            name="patient_id"
-            value={formData.patient_id}
-            onChange={handleChange}
-            required
-            style={inputStyle}
-          >
-            <option value="">Selecione o paciente...</option>
-            {patients.map((patient) => (
-              <option key={patient.id} value={patient.id}>
-                {patient.full_name}
-              </option>
-            ))}
-          </select>
-        </div>
+      {/* Formulário */}
+      <Card sx={{ width: "100%", maxWidth: 640 }}>
+        <CardContent sx={{ p: 3 }}>
+          <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="pt-br">
+            <Box component="form" onSubmit={handleSubmit}>
+              <Stack spacing={2}>
+                {/* Paciente */}
+                <TextField
+                  label="Paciente"
+                  name="patient_id"
+                  value={formData.patient_id}
+                  onChange={handleChange}
+                  required
+                  select
+                  fullWidth
+                >
+                  <MenuItem value="">Selecione o paciente...</MenuItem>
+                  {patients.map((patient) => (
+                    <MenuItem key={patient.id} value={patient.id}>
+                      {patient.full_name}
+                    </MenuItem>
+                  ))}
+                </TextField>
 
-        {/* Dentista */}
-        <div style={fieldStyle}>
-          <label style={labelStyle}>Dentista *</label>
-          <select
-            name="dentist_id"
-            value={formData.dentist_id}
-            onChange={handleChange}
-            required
-            style={inputStyle}
-          >
-            <option value="">Selecione o dentista...</option>
-            {dentists.map((dentist) => (
-              <option key={dentist.id} value={dentist.id}>
-                {dentist.username}
-              </option>
-            ))}
-          </select>
-        </div>
+                {/* Dentista */}
+                <TextField
+                  label="Dentista"
+                  name="dentist_id"
+                  value={formData.dentist_id}
+                  onChange={handleChange}
+                  required
+                  select
+                  fullWidth
+                >
+                  <MenuItem value="">Selecione o dentista...</MenuItem>
+                  {dentists.map((dentist) => (
+                    <MenuItem key={dentist.id} value={dentist.id}>
+                      {dentist.username}
+                    </MenuItem>
+                  ))}
+                </TextField>
 
-        {/* Início */}
-        <div style={fieldStyle}>
-          <label style={labelStyle}>Data e hora de início *</label>
-          <input
-            type="datetime-local"
-            name="start_datetime"
-            value={formData.start_datetime}
-            onChange={handleChange}
-            required
-            style={inputStyle}
-          />
-        </div>
+                {/* Data/hora de início e fim */}
+                <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+                  <DateTimePicker
+                    label="Início"
+                    value={startDateTime}
+                    onChange={(newValue) => setStartDateTime(newValue)}
+                    format="DD/MM/YYYY HH:mm"
+                    ampm={false}
+                    slotProps={{
+                      textField: {
+                        fullWidth: true,
+                        required: true,
+                      },
+                    }}
+                  />
 
-        {/* Fim */}
-        <div style={fieldStyle}>
-          <label style={labelStyle}>Data e hora de fim *</label>
-          <input
-            type="datetime-local"
-            name="end_datetime"
-            value={formData.end_datetime}
-            onChange={handleChange}
-            required
-            style={inputStyle}
-          />
-        </div>
+                  <DateTimePicker
+                    label="Fim"
+                    value={endDateTime}
+                    onChange={(newValue) => setEndDateTime(newValue)}
+                    format="DD/MM/YYYY HH:mm"
+                    ampm={false}
+                    slotProps={{
+                      textField: {
+                        fullWidth: true,
+                        required: true,
+                      },
+                    }}
+                  />
+                </Stack>
 
-        {/* Status */}
-        <div style={fieldStyle}>
-          <label style={labelStyle}>Status *</label>
-          <select
-            name="status"
-            value={formData.status}
-            onChange={handleChange}
-            required
-            style={inputStyle}
-          >
-            <option value="scheduled">Agendada</option>
-            <option value="completed">Concluída</option>
-            <option value="canceled">Cancelada</option>
-          </select>
-        </div>
+                {/* Status */}
+                <TextField
+                  label="Status"
+                  name="status"
+                  value={formData.status}
+                  onChange={handleChange}
+                  required
+                  select
+                  fullWidth
+                >
+                  {STATUS_OPTIONS.map((opt) => (
+                    <MenuItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </MenuItem>
+                  ))}
+                </TextField>
 
-        {/* Observações */}
-        <div style={fieldStyle}>
-          <label style={labelStyle}>Observações</label>
-          <textarea
-            name="notes"
-            value={formData.notes}
-            onChange={handleChange}
-            rows={3}
-            style={inputStyle}
-          />
-        </div>
+                {/* Observações */}
+                <TextField
+                  label="Observações"
+                  name="notes"
+                  value={formData.notes}
+                  onChange={handleChange}
+                  multiline
+                  rows={3}
+                  fullWidth
+                />
 
-        <button
-          type="submit"
-          disabled={isLoading}
-          style={{
-            marginTop: "1rem",
-            padding: "0.75rem 1.5rem",
-            background: isEditing ? "#0d6efd" : "#198754",
-            color: "#fff",
-            border: "none",
-            borderRadius: "4px",
-            cursor: isLoading ? "not-allowed" : "pointer",
-            width: "100%",
-          }}
-        >
-          {isLoading
-            ? "Salvando..."
-            : isEditing
-            ? "Salvar alterações"
-            : "Criar agendamento"}
-        </button>
-      </form>
-    </main>
+                {/* Botão de envio */}
+                <Button
+                  type="submit"
+                  variant="contained"
+                  color={isEditing ? "primary" : "success"}
+                  size="large"
+                  disabled={isLoading}
+                  startIcon={
+                    isLoading ? (
+                      <CircularProgress size={18} color="inherit" />
+                    ) : isEditing ? (
+                      <SaveIcon />
+                    ) : (
+                      <CalendarMonthIcon />
+                    )
+                  }
+                  fullWidth
+                >
+                  {isLoading
+                    ? "Salvando..."
+                    : isEditing
+                    ? "Salvar alterações"
+                    : "Criar agendamento"}
+                </Button>
+              </Stack>
+            </Box>
+          </LocalizationProvider>
+        </CardContent>
+      </Card>
+    </Box>
   );
 }
-
-const fieldStyle = { marginBottom: "1rem" };
-const labelStyle = { display: "block", marginBottom: "0.25rem" };
-const inputStyle = {
-  width: "100%",
-  padding: "0.5rem",
-  boxSizing: "border-box",
-};
-
-export default AppointmentFormPage;

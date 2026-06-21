@@ -1,72 +1,135 @@
 import { useNavigate } from "react-router-dom";
 
-function HomePage() {
+import Box from "@mui/material/Box";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
+import Typography from "@mui/material/Typography";
+import Button from "@mui/material/Button";
+import Stack from "@mui/material/Stack";
+
+import PeopleIcon from "@mui/icons-material/People";
+import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
+
+export default function HomePage() {
   const navigate = useNavigate();
 
-  function handleLogoutClick() {
-    if (window.confirm("Deseja realmente sair?")) {
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("refreshToken");
-      navigate("/login", { replace: true });
-    }
-  }
-
   return (
-    <main style={{ padding: "2rem" }}>
-      <header
-        style={{
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",        // centraliza tudo horizontalmente
+      }}
+    >
+      {/* Títulos */}
+      <Typography
+        variant="h4"
+        align="center"
+        gutterBottom
+        sx={{ mb: 1 }}
+      >
+        Bem-vindo(a) à Odonto Wudich
+      </Typography>
+
+      <Typography
+        variant="body1"
+        color="text.secondary"
+        align="center"
+        sx={{ mb: 4, maxWidth: 600 }}
+      >
+        Selecione uma das opções abaixo para gerenciar pacientes ou agendamentos.
+      </Typography>
+
+      {/* Container dos cards */}
+      <Box
+        sx={{
+          width: "100%",
+          maxWidth: 600,             // largura máxima dos cards
           display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: "2rem",
+          flexDirection: "column",
+          gap: 2,                    // espaço entre os cards
         }}
       >
-        <h1>Odonto Wudich</h1>
-        <button
-          onClick={handleLogoutClick}
-          style={{
-            background: "#d9534f",
-            color: "#fff",
-            border: "none",
-            padding: "0.5rem 1rem",
-            borderRadius: "4px",
-            cursor: "pointer",
-          }}
-        >
-          Sair
-        </button>
-      </header>
+        {/* Card de Pacientes */}
+        <Card>
+          <CardContent>
+            <Stack 
+              direction="row" 
+              spacing={2} 
+              sx={{ alignItems: "center", mb: 2 }}
+            >
+              <Box
+                sx={{
+                  backgroundColor: "primary.light",
+                  color: "primary.contrastText",
+                  borderRadius: "50%",
+                  width: 48,
+                  height: 48,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <PeopleIcon />
+              </Box>
+              <Box>
+                <Typography variant="h6">Pacientes</Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Cadastre, edite e gerencie os dados dos pacientes da clínica.
+                </Typography>
+              </Box>
+            </Stack>
 
-      <p>Dashboard inicial da clínica odontológica.</p>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={() => navigate("/patients")}
+            >
+              Ver pacientes
+            </Button>
+          </CardContent>
+        </Card>
 
-      <section style={{ marginTop: "2rem" }}>
-        <h2>Menu</h2>
-        <nav style={{ display: "flex", gap: "1rem", marginTop: "1rem" }}>
-          <button
-            onClick={() => navigate("/patients")}
-            style={menuButtonStyle}
-          >
-            Pacientes
-          </button>
-          <button
-            onClick={() => navigate("/appointments")}
-            style={menuButtonStyle}
-          >
-            Agendamentos
-          </button>
-        </nav>
-      </section>
-    </main>
+        {/* Card de Agendamentos */}
+        <Card>
+          <CardContent>
+            <Stack 
+              direction="row" 
+              spacing={2} 
+              sx={{ alignItems: "center", mb: 2 }}
+            >
+              <Box
+                sx={{
+                  backgroundColor: "secondary.main",
+                  color: "secondary.contrastText",
+                  borderRadius: "50%",
+                  width: 48,
+                  height: 48,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <CalendarMonthIcon />
+              </Box>
+              <Box>
+                <Typography variant="h6">Agendamentos</Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Organize as consultas dos pacientes e a agenda da equipe.
+                </Typography>
+              </Box>
+            </Stack>
+
+            <Button
+              variant="outlined"
+              color="primary"
+              onClick={() => navigate("/appointments")}
+            >
+              Ver agendamentos
+            </Button>
+          </CardContent>
+        </Card>
+      </Box>
+    </Box>
   );
 }
-
-const menuButtonStyle = {
-  padding: "0.75rem 1.5rem",
-  background: "#0d6efd",
-  color: "#fff",
-  border: "none",
-  borderRadius: "4px",
-  cursor: "pointer",
-};
-
-export default HomePage;
