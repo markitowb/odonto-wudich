@@ -1,244 +1,180 @@
-# Odonto Wudich - Backend
+# Odonto Wudich – Backend
 
-API REST para gestão de clínica odontológica, construída com **Django 6** e **Django REST Framework**, com autenticação JWT, controle de permissões por papel (dentista, secretária) e **testes automatizados com pytest**.
-
-Este backend foi pensado para uso real em produção e como projeto de portfólio de desenvolvimento Python.
-
----
-
-## Tecnologias Utilizadas
-
-- **Linguagem**
-  - Python 3.12
-
-- **Frameworks**
-  - Django 6
-  - Django REST Framework
-  - drf-spectacular (documentação OpenAPI/Swagger)
-
-- **Autenticação e Autorização**
-  - JWT (SimpleJWT)
-  - Permissões por role (dentist, secretary)
-
-- **Banco de Dados**
-  - SQLite (desenvolvimento)
-  - ORM do Django
-
-- **Testes**
-  - pytest
-  - pytest-django
-  - Faker
+API REST para gestão de clínica odontológica, construída com
+**Django 6.0.4** e **Django REST Framework**, com autenticação
+JWT, controle de permissões por papel e testes automatizados
+com pytest.
 
 ---
 
-## Domínio e Arquitetura
+## Tecnologias
 
-A API trabalha hoje com dois domínios principais:
+|    Biblioteca         | Versão  |
+|-----------------------|---------|
+|    Python             | 3.12+   |
+|    Django             | 6.0.4   |
+| Django REST Framework | 3.17.1  |
+|    SimpleJWT          | 5.5.1   |
+|   drf-spectacular     | 0.29.0  |
+| django-cors-headers   | 4.9.0   |
+| python-decouple       | 3.8     |
+|     pytest            | 9.0.3   |
+|    pytest-django      | 4.12.0  |
+|      Faker            | 40.15.0 |
 
-### 1. Usuários (`users`)
+**Banco de dados:**
+- SQLite3 em desenvolvimento
+- Pronto para PostgreSQL em produção (psycopg2-binary instalado)
 
-- Modelo de usuário customizado (`CustomUser`) com campo `role`:
-  - `dentist`
-  - `secretary`
-- Autenticação via JWT (login, refresh, etc.)
+---
 
-### 2. Pacientes (`patients`)
+## Domínio da Aplicação
 
-- CRUD completo de pacientes.
-- Regras importantes:
-  - CPF único (validação em nível de banco).
-  - Apenas usuários autenticados podem listar e criar pacientes.
-- Endpoints protegidos por autenticação.
+### Usuários (`users`)
+- Modelo de usuário customizado com campo `role`
+- Autenticação JWT com access e refresh token
+- Endpoints:
+  - `POST /api/users/token/` — login
+  - `POST /api/users/token/refresh/` — renovar token
+  - `GET /api/users/me/` — dados do usuário autenticado
+  - `PATCH /api/users/me/` — atualizar dados do usuário
+  - `POST /api/users/register/` — registrar novo usuário
+  - `GET /api/users/dentists/` — listar dentistas
 
-### 3. Consultas (`appointments`)
+### Pacientes (`patients`)
+- CRUD completo
+- CPF com validação e unicidade garantida
+- Endpoints:
+  - `GET /api/patients/`
+  - `POST /api/patients/`
+  - `GET /api/patients/{id}/`
+  - `PUT /api/patients/{id}/`
+  - `PATCH /api/patients/{id}/`
+  - `DELETE /api/patients/{id}/`
 
-- Criação, listagem, atualização e cancelamento de consultas.
-- Campos principais:
-  - `patient`
-  - `dentist`
-  - `start_datetime`
-  - `end_datetime`
-  - `status` (`scheduled`, `completed`, `canceled`)
-- Regras de negócio:
-  - Dentista e secretária podem criar consultas.
-  - **Apenas o dentista pode marcar uma consulta como `completed`.**
-  - Usuário não autenticado não consegue acessar endpoints de consultas.
+### Consultas (`appointments`)
+- Criação, listagem, atualização e cancelamento
+- Controle de permissões por papel de usuário
+- Endpoints:
+  - `GET /api/appointments/`
+  - `POST /api/appointments/`
+  - `GET /api/appointments/{id}/`
+  - `PUT /api/appointments/{id}/`
+  - `PATCH /api/appointments/{id}/`
+  - `DELETE /api/appointments/{id}/`
+
+---
+
+## Banco de Dados
+
+```python
+# config/settings.py
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
+    }
+}
+```
+
+> Para produção, o projeto já possui `psycopg2-binary` instalado,
+> pronto para migrar para PostgreSQL.
+
+---
+
+## Autenticação JWT
+
+Configurado com SimpleJWT:
+
+- Access token: 5 minutos
+- Refresh token: 1 dia
+- Rotação de refresh token habilitada
 
 ---
 
 ## Segurança
 
-Alguns cuidados de segurança adotados no projeto:
-
-- Uso de **variáveis de ambiente** para credenciais e configurações sensíveis (não são commitadas no repositório).
-- Senhas de usuários armazenadas com hashing seguro (padrão do Django).
-- Endpoints protegidos com:
-  - `IsAuthenticated` onde necessário.
-  - Permissões customizadas para regras de negócio (dentista x secretária).
-- Proteções padrão do Django:
-  - CSRF, XSS, SQL Injection (via ORM e middleware).
-- Uso de `USE_TZ = True` e `timezone.now()` para evitar problemas com datas e horários.
+- Variáveis de ambiente com `python-decouple`
+- Senhas armazenadas com hashing seguro
+- Endpoints protegidos com `IsAuthenticated`
+- Permissões customizadas por papel de usuário
+- CORS configurado com `django-cors-headers`
+- Nenhum secret versionado no repositório
 
 ---
 
 ## Testes Automatizados
 
-Os testes foram desenvolvidos com **pytest** + **pytest-django** e cobrem:
-
-### Pacientes (`patients/tests/`)
-
-- **Modelo**
-  - Criação de paciente com sucesso.
-  - CPF deve ser único (gera `IntegrityError` se duplicado).
-  - Representação textual (`__str__`) retorna o nome completo.
-
-- **API**
-  - Usuário não autenticado **não** consegue:
-    - listar pacientes (401)
-    - criar pacientes (401)
-  - Dentista:
-    - lista pacientes (200)
-    - cria paciente (201)
-    - visualiza detalhes de um paciente (200)
-    - atualiza paciente (200)
-    - exclui paciente (204)
-  - Secretária:
-    - consegue criar pacientes (201)
-
-### Consultas (`appointments/tests/`)
-
-- Usuário não autenticado:
-  - não consegue criar consultas (401)
-  - não consegue listar consultas (401)
-  - não consegue atualizar consultas (401)
-
-- Dentista:
-  - cria consulta (201)
-  - lista consultas (200)
-  - visualiza detalhes (200)
-  - cancela consulta (200)
-  - **marca consulta como `completed` (200)**
-
-- Secretária:
-  - cria consulta (201)
-  - cancela consulta (200)
-  - **não pode marcar consulta como `completed` (403)**
-
-#### Como rodar os testes
-
 ```bash
-# dentro de odonto-wudich-backend, com venv ativo
+# Com venv ativo, dentro de odonto-wudich-backend
 pytest -v
 ```
 
+Cobertura atual:
+
+### Pacientes
+- Criação de paciente
+- CPF único
+- Representação textual do modelo
+- Autenticação e autorização na API
+
+### Consultas
+- Criação, listagem e atualização
+- Cancelamento de consulta
+- Regras de permissão por papel
+
 ---
 
-## Como Rodar o Projeto Localmente
-
-### 1. Clonar o repositório
+## Como Rodar o Projeto
 
 ```bash
-git clone https://github.com/SEU_USUARIO/odonto-wudich.git
-cd odonto-wudich/odonto-wudich-backend
-```
+cd odonto-wudich-backend
 
-### 2. Criar e ativar o ambiente virtual
-
-```bash
 python -m venv venv
-# Windows
 venv\Scripts\activate
-# Linux/Mac
-# source venv/bin/activate
-```
 
-### 3. Instalar dependências
-
-```bash
 pip install -r requirements.txt
 ```
 
-### 4. Configurar variáveis de ambiente
-
-Crie um arquivo `.env` (ou use outro mecanismo de variáveis de ambiente) com pelo menos:
+Crie o arquivo `.env`:
 
 ```env
-SECRET_KEY=uma_chave_secreta_segura
+SECRET_KEY=sua_chave_secreta_aqui
 DEBUG=True
 ALLOWED_HOSTS=localhost,127.0.0.1
 ```
 
-> **Importante:** o arquivo `.env` não deve ser commitado.
-
-### 5. Aplicar migrações
-
 ```bash
 python manage.py migrate
-```
-
-### 6. Criar superusuário (opcional, para acessar o Django Admin)
-
-```bash
 python manage.py createsuperuser
-```
-
-### 7. Rodar o servidor
-
-```bash
 python manage.py runserver
 ```
 
-A API estará disponível em:
-
-- `http://127.0.0.1:8000/api/`
+API disponível em: `http://127.0.0.1:8000/api/`
 
 ---
 
-## Endpoints Principais
+## Documentação da API
 
-Alguns endpoints importantes (resumo):
-
-### Autenticação (JWT)
-
-- `POST /api/token/` – obter access e refresh token
-- `POST /api/token/refresh/` – renovar access token
-
-### Pacientes
-
-- `GET /api/patients/` – listar pacientes
-- `POST /api/patients/` – criar paciente
-- `GET /api/patients/{id}/` – detalhes de um paciente
-- `PATCH /api/patients/{id}/` – atualizar paciente
-- `DELETE /api/patients/{id}/` – excluir paciente
-
-### Consultas
-
-- `GET /api/appointments/` – listar consultas
-- `POST /api/appointments/` – criar consulta
-- `GET /api/appointments/{id}/` – detalhes de uma consulta
-- `PATCH /api/appointments/{id}/` – atualizar status (`scheduled`, `completed`, `canceled`)
-
-> A documentação Swagger (OpenAPI) pode ser acessada em:
->
-> - `GET /api/schema/swagger-ui/`
+- Swagger UI: `http://127.0.0.1:8000/api/schema/swagger-ui/`
+- Redoc: `http://127.0.0.1:8000/api/schema/redoc/`
 
 ---
 
-## Próximos Passos / Melhorias
+## Próximas Melhorias
 
-- Integração com frontend em React (odonto-wudich-frontend).
-- Paginação e filtros avançados em pacientes e consultas.
-- Logs estruturados e monitoramento.
-- Deploy em ambiente de nuvem (Railway, Render, etc.).
+- Migrar para PostgreSQL em produção
+- Paginação e filtros avançados
+- Logs estruturados
+- Expandir cobertura de testes
+- Deploy em nuvem
 
 ---
 
 ## Autor
 
-**M@rkitowb**  
+**M@rkitowb**
 Desenvolvedor Python | Django | APIs REST
 
 - GitHub: [https://github.com/markitowb](https://github.com/markitowb)
 - LinkedIn: [https://www.linkedin.com/in/marcusviniciuswb](https://www.linkedin.com/in/marcusviniciuswb)
-
----
